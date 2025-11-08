@@ -37,9 +37,8 @@ import { US_STATES } from "@/lib/usStates";
 import { filterCities } from "@/lib/usCities";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
+import PlacesAutocomplete, { geocodeByAddress, getLatLng } from "react-places-autocomplete";
+import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -103,8 +102,20 @@ const Dashboard = () => {
   const { businessProfile, isLoading, hasBusiness, createBusiness, updateBusiness, deleteBusiness, isCreating, isUpdating, isDeleting } = useBusinessProfile();
   const [isEditing, setIsEditing] = useState(!hasBusiness);
   const [showAISetup, setShowAISetup] = useState(false);
-  const [cityOpen, setCityOpen] = useState(false);
-  const [citySearchQuery, setCitySearchQuery] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+
+  // Load Google Maps API on mount
+  useEffect(() => {
+    loadGoogleMaps()
+      .then(() => {
+        setGoogleMapsLoaded(true);
+      })
+      .catch((error) => {
+        console.error("Failed to load Google Maps:", error);
+      });
+  }, []);
   
 
   const form = useForm<BusinessFormData>({
@@ -640,15 +651,87 @@ const Dashboard = () => {
                         <FormItem>
                           <FormLabel>Street Address *</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="125 Madison Avenue" 
-                              {...field}
-                              pattern="[0-9]+\s+[A-Za-z\s]+"
-                              title="Please enter a valid street address (e.g., 123 Main Street)"
-                            />
+                            {googleMapsLoaded ? (
+                              <PlacesAutocomplete
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                onSelect={async (address) => {
+                                  field.onChange(address);
+                                  try {
+                                    const results = await geocodeByAddress(address);
+                                    const latLng = await getLatLng(results[0]);
+                                    
+                                    // Extract city and state from address components
+                                    const addressComponents = results[0].address_components;
+                                    const cityComponent = addressComponents.find(
+                                      (component) => component.types.includes("locality")
+                                    );
+                                    const stateComponent = addressComponents.find(
+                                      (component) => component.types.includes("administrative_area_level_1")
+                                    );
+                                    const zipComponent = addressComponents.find(
+                                      (component) => component.types.includes("postal_code")
+                                    );
+                                    
+                                    if (cityComponent) {
+                                      form.setValue("city", cityComponent.long_name);
+                                    }
+                                    if (stateComponent) {
+                                      form.setValue("state", stateComponent.short_name);
+                                    }
+                                    if (zipComponent) {
+                                      form.setValue("zip_code", zipComponent.long_name);
+                                    }
+                                  } catch (error) {
+                                    console.error("Error geocoding address:", error);
+                                  }
+                                }}
+                              >
+                              {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+                                <div className="relative">
+                                  <Input
+                                    {...getInputProps({
+                                      placeholder: "125 Madison Avenue",
+                                      className: "w-full",
+                                    })}
+                                  />
+                                  {suggestions.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                                      {loading && (
+                                        <div className="p-2 text-sm text-muted-foreground">Loading...</div>
+                                      )}
+                                      {suggestions.map((suggestion) => {
+                                        const className = cn(
+                                          "p-2 cursor-pointer hover:bg-accent text-sm",
+                                          suggestion.active && "bg-accent"
+                                        );
+                                        return (
+                                          <div
+                                            {...getSuggestionItemProps(suggestion, { className })}
+                                            key={suggestion.placeId}
+                                          >
+                                            {suggestion.description}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              </PlacesAutocomplete>
+                            ) : (
+                              <Input
+                                placeholder="125 Madison Avenue"
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                disabled={!googleMapsLoaded}
+                              />
+                            )}
                           </FormControl>
                           <FormDescription>
-                            Enter street number and name (e.g., 123 Main Street)
+                            Start typing your address and select from suggestions
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -658,67 +741,57 @@ const Dashboard = () => {
                       control={form.control}
                       name="city"
                       render={({ field }) => {
-                        const cities = filterCities(citySearchQuery || field.value || "");
-                        
+                        const handleCityChange = (value: string) => {
+                          field.onChange(value);
+                          if (value.length >= 2) {
+                            const filtered = filterCities(value);
+                            setCitySuggestions(filtered);
+                            setShowCitySuggestions(true);
+                          } else {
+                            setShowCitySuggestions(false);
+                          }
+                        };
+
                         return (
                           <FormItem className="flex flex-col">
                             <FormLabel>City *</FormLabel>
-                            <Popover open={cityOpen} onOpenChange={(open) => {
-                              setCityOpen(open);
-                              if (open) {
-                                setCitySearchQuery(field.value || "");
-                              }
-                            }}>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    type="button"
-                                    className={cn(
-                                      "w-full justify-between",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                  >
-                                    {field.value || "Select city"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[400px] p-0" align="start">
-                                <Command>
-                                  <CommandInput 
-                                    placeholder="Search city..." 
-                                    value={citySearchQuery}
-                                    onValueChange={setCitySearchQuery}
-                                  />
-                                  <CommandList>
-                                    <CommandEmpty>No city found. Try typing more letters.</CommandEmpty>
-                                    <CommandGroup>
-                                      {cities.map((city) => (
-                                        <CommandItem
-                                          key={city}
-                                          value={city}
-                                          onSelect={() => {
-                                            field.onChange(city);
-                                            setCitySearchQuery("");
-                                            setCityOpen(false);
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              city === field.value ? "opacity-100" : "opacity-0"
-                                            )}
-                                          />
-                                          {city}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  placeholder="New York"
+                                  value={field.value}
+                                  onChange={(e) => handleCityChange(e.target.value)}
+                                  onFocus={() => {
+                                    if (field.value && field.value.length >= 2) {
+                                      const filtered = filterCities(field.value);
+                                      setCitySuggestions(filtered);
+                                      setShowCitySuggestions(true);
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    // Delay hiding suggestions to allow click
+                                    setTimeout(() => setShowCitySuggestions(false), 200);
+                                  }}
+                                />
+                                {showCitySuggestions && citySuggestions.length > 0 && (
+                                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                                    {citySuggestions.map((city) => (
+                                      <div
+                                        key={city}
+                                        className="p-2 cursor-pointer hover:bg-accent text-sm"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          field.onChange(city);
+                                          setShowCitySuggestions(false);
+                                        }}
+                                      >
+                                        {city}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         );
