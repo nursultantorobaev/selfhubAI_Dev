@@ -52,10 +52,12 @@ export const ProtectedRoute = ({
   }
 
   // Require customer role (not business owner)
-  if (requireCustomer && isBusinessOwner) {
-    // Redirect to business dashboard if they're a business owner
-    return <Navigate to="/business/dashboard" replace />;
-  }
+  // BUT: Allow business owners to access customer routes too (they can book services)
+  // Only block if explicitly requiring customer-only (which we don't use)
+  // if (requireCustomer && isBusinessOwner) {
+  //   // Redirect to business dashboard if they're a business owner
+  //   return <Navigate to="/business/dashboard" replace />;
+  // }
 
   return <>{children}</>;
 };

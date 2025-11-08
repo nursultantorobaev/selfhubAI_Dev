@@ -43,11 +43,11 @@ const App = () => (
               {/* Auth Routes - Redirect based on role */}
               <Route path="/redirect" element={<RoleBasedRedirect />} />
               
-              {/* Customer Routes */}
+              {/* Customer Routes - Business owners can also access these */}
               <Route 
                 path="/customer/home" 
                 element={
-                  <ProtectedRoute requireAuth requireCustomer>
+                  <ProtectedRoute requireAuth>
                     <CustomerHome />
                   </ProtectedRoute>
                 } 
@@ -55,7 +55,7 @@ const App = () => (
               <Route 
                 path="/customer/bookings" 
                 element={
-                  <ProtectedRoute requireAuth requireCustomer>
+                  <ProtectedRoute requireAuth>
                     <CustomerDashboard />
                   </ProtectedRoute>
                 } 

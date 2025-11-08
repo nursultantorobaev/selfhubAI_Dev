@@ -43,16 +43,8 @@ export default function CustomerHome() {
     return filters;
   });
 
-  // Redirect business owners to their dashboard
-  useEffect(() => {
-    // Check user role from metadata (set during signup), profile flag (set when business is created), or if they have a business profile
-    const userRole = user?.user_metadata?.user_role;
-    const isBusinessOwner = profile?.is_business_owner || hasBusiness || userRole === "business";
-    
-    if (isBusinessOwner) {
-      navigate("/business/dashboard");
-    }
-  }, [user, profile, hasBusiness, navigate]);
+  // Business owners can also browse and book services, so we don't redirect them
+  // They can access both business dashboard and customer features
 
   // Update URL params when filters change
   useEffect(() => {

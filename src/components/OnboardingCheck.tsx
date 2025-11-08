@@ -32,7 +32,8 @@ export const OnboardingCheck = ({ children, onOnboardingComplete }: OnboardingCh
     const userRole = user.user_metadata?.user_role;
     const isBusinessOwner = profile?.is_business_owner || hasBusiness || userRole === "business";
 
-    // If business owner, never show customer onboarding
+    // Business owners can also be customers, but they don't need customer onboarding
+    // They can browse and book services without onboarding
     if (isBusinessOwner) {
       setCheckingOnboarding(false);
       return;
