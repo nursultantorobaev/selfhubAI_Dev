@@ -81,7 +81,14 @@ const businessSchema = z.object({
   state: z.string().optional(),
   zip_code: z.string().optional(),
   country: z.string().default("US"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
+  phone: z.string().min(1, "Phone number is required").refine(
+    (val) => {
+      // Allow various phone formats, just check it has at least 10 digits
+      const digits = val.replace(/\D/g, "");
+      return digits.length >= 10;
+    },
+    { message: "Please enter a valid phone number (at least 10 digits)" }
+  ),
   email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
   website: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
   logo_url: z.string().optional(),
@@ -767,15 +774,14 @@ const Dashboard = () => {
                         <FormItem>
                           <FormLabel>Phone Number *</FormLabel>
                           <FormControl>
-                            <div className="[&_.PhoneInputInput]:flex [&_.PhoneInputInput]:h-10 [&_.PhoneInputInput]:w-full [&_.PhoneInputInput]:rounded-md [&_.PhoneInputInput]:border [&_.PhoneInputInput]:border-input [&_.PhoneInputInput]:bg-background [&_.PhoneInputInput]:px-3 [&_.PhoneInputInput]:py-2 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:ring-offset-background [&_.PhoneInputInput]:focus-visible:outline-none [&_.PhoneInputInput]:focus-visible:ring-2 [&_.PhoneInputInput]:focus-visible:ring-ring [&_.PhoneInputInput]:focus-visible:ring-offset-2 [&_.PhoneInputInput]:disabled:cursor-not-allowed [&_.PhoneInputInput]:disabled:opacity-50 [&_.PhoneInputCountry]:mr-2">
-                              <PhoneInput
-                                international
-                                defaultCountry="US"
-                                value={field.value}
-                                onChange={(value) => field.onChange(value || "")}
-                                placeholder="(555) 123-4567"
-                              />
-                            </div>
+                            <PhoneInput
+                              international
+                              defaultCountry="US"
+                              value={field.value}
+                              onChange={(value) => field.onChange(value || "")}
+                              placeholder="(555) 123-4567"
+                              className="w-full"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

@@ -147,4 +147,36 @@ All colors MUST be HSL.
       font-size: inherit;
     }
   }
+
+  /* Phone Input Styling */
+  .PhoneInput {
+    display: flex;
+    align-items: center;
+  }
+
+  .PhoneInputInput {
+    flex: 1;
+    border: 1px solid hsl(var(--input));
+    border-radius: calc(var(--radius) - 2px);
+    background: hsl(var(--background));
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+  }
+
+  .PhoneInputInput:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: hsl(var(--ring));
+    ring-offset: 2px;
+  }
+
+  .PhoneInputCountry {
+    margin-right: 0.5rem;
+  }
+
+  .PhoneInputCountryIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 }
