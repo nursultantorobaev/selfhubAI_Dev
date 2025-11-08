@@ -19,6 +19,10 @@ const Header = () => {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Check if user is a business owner (from metadata or profile flag)
+  const userRole = user?.user_metadata?.user_role;
+  const isBusinessOwner = profile?.is_business_owner || userRole === "business";
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
@@ -42,7 +46,7 @@ const Header = () => {
             <h2 
               className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent cursor-pointer"
               onClick={() => {
-                if (user && profile?.is_business_owner) {
+                if (user && isBusinessOwner) {
                   navigate("/business/dashboard");
                 } else if (user) {
                   navigate("/customer/home");
@@ -60,7 +64,7 @@ const Header = () => {
               <div className="h-8 w-8 animate-pulse bg-muted rounded" />
             ) : user ? (
               <>
-                {profile?.is_business_owner ? (
+                {isBusinessOwner ? (
                   <Button 
                     size="sm" 
                     className="hidden sm:flex text-xs sm:text-sm"
@@ -103,7 +107,7 @@ const Header = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {profile?.is_business_owner ? (
+                    {isBusinessOwner ? (
                       <>
                         <DropdownMenuItem onClick={() => navigate("/business/dashboard")}>
                           <Settings className="mr-2 h-4 w-4" />

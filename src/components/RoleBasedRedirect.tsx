@@ -19,8 +19,11 @@ export const RoleBasedRedirect = () => {
       return;
     }
 
-    // Check user role and redirect accordingly
-    if (profile?.is_business_owner) {
+    // Check user role from metadata (set during signup) or profile flag (set when business is created)
+    const userRole = user.user_metadata?.user_role;
+    const isBusinessOwner = profile?.is_business_owner || userRole === "business";
+
+    if (isBusinessOwner) {
       // Business owner - redirect to business dashboard
       navigate("/business/dashboard");
     } else {

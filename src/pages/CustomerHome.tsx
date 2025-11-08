@@ -45,11 +45,14 @@ export default function CustomerHome() {
 
   // Redirect business owners to their dashboard
   useEffect(() => {
-    // Check both the flag and if they have a business profile
-    if (profile?.is_business_owner || hasBusiness) {
+    // Check user role from metadata (set during signup), profile flag (set when business is created), or if they have a business profile
+    const userRole = user?.user_metadata?.user_role;
+    const isBusinessOwner = profile?.is_business_owner || hasBusiness || userRole === "business";
+    
+    if (isBusinessOwner) {
       navigate("/business/dashboard");
     }
-  }, [profile, hasBusiness, navigate]);
+  }, [user, profile, hasBusiness, navigate]);
 
   // Update URL params when filters change
   useEffect(() => {

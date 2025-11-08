@@ -28,8 +28,9 @@ export const OnboardingCheck = ({ children, onOnboardingComplete }: OnboardingCh
       return;
     }
 
-    // Check if user is a business owner (by flag or by having a business profile)
-    const isBusinessOwner = profile?.is_business_owner || hasBusiness;
+    // Check if user is a business owner (by metadata, profile flag, or by having a business profile)
+    const userRole = user.user_metadata?.user_role;
+    const isBusinessOwner = profile?.is_business_owner || hasBusiness || userRole === "business";
 
     // If business owner, never show customer onboarding
     if (isBusinessOwner) {

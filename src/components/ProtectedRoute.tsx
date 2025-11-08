@@ -39,16 +39,20 @@ export const ProtectedRoute = ({
   }
 
   // Require business owner role
-  if (requireBusiness && (!profile?.is_business_owner)) {
+  // Check user role from metadata (set during signup) or profile flag (set when business is created)
+  const userRole = user?.user_metadata?.user_role;
+  const isBusinessOwner = profile?.is_business_owner || userRole === "business";
+  
+  if (requireBusiness && !isBusinessOwner) {
     // Redirect to customer home if they're a customer, otherwise to home
-    if (user && !profile?.is_business_owner) {
+    if (user && !isBusinessOwner) {
       return <Navigate to="/customer/home" replace />;
     }
     return <Navigate to="/" replace />;
   }
 
   // Require customer role (not business owner)
-  if (requireCustomer && profile?.is_business_owner) {
+  if (requireCustomer && isBusinessOwner) {
     // Redirect to business dashboard if they're a business owner
     return <Navigate to="/business/dashboard" replace />;
   }
