@@ -97,11 +97,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    // Get the current origin (works for both dev and production)
+    const redirectUrl = `${window.location.origin}/`;
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName || "",
         },
@@ -130,11 +133,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const resendConfirmationEmail = async (email: string) => {
+    // Get the current origin (works for both dev and production)
+    const redirectUrl = `${window.location.origin}/`;
+    
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: email,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: redirectUrl,
       },
     });
     return { error };
