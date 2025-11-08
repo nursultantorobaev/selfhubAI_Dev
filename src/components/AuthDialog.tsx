@@ -138,41 +138,75 @@ const AuthDialog = ({ open, onOpenChange, preSelectedRole }: AuthDialogProps) =>
   const getErrorMessage = (error: any): string => {
     if (!error) return "";
     
-    const message = error.message?.toLowerCase() || "";
+    // Log the full error for debugging
+    console.error("Sign in error:", error);
     
-    // Handle common Supabase auth errors
-    if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
-      return "Invalid email or password. Please try again.";
-    }
-    if (message.includes("email not confirmed") || message.includes("email not verified")) {
-      // Show resend option if email not confirmed
+    const message = error.message?.toLowerCase() || "";
+    const status = error.status;
+    
+    // Handle specific error codes and messages
+    if (message.includes("email not confirmed") || message.includes("email not verified") || status === 400) {
+      // Check if it's specifically an email verification issue
       const email = loginForm.getValues("email");
       if (email) {
         setResendEmailAddress(email);
         setShowResendEmail(true);
       }
-      return "Please verify your email address before signing in. Check your inbox for the verification link.";
-    }
-    if (message.includes("too many requests")) {
-      return "Too many attempts. Please wait a moment and try again.";
-    }
-    if (message.includes("user not found")) {
-      return "Invalid email or password. Please try again.";
+      return "Please verify your email address before signing in. Check your inbox for the verification link, or click 'Resend Confirmation Email' below.";
     }
     
-    return error.message || "An unexpected error occurred. Please try again.";
+    if (message.includes("invalid login credentials") || message.includes("invalid credentials") || message.includes("invalid password")) {
+      return "Invalid email or password. Please check your credentials and try again. If you forgot your password, use 'Forgot password?' to reset it.";
+    }
+    
+    if (message.includes("too many requests") || message.includes("rate limit")) {
+      return "Too many sign-in attempts. Please wait a few minutes and try again.";
+    }
+    
+    if (message.includes("user not found") || message.includes("no user found")) {
+      return "No account found with this email address. Please check your email or sign up for a new account.";
+    }
+    
+    if (message.includes("email rate limit")) {
+      return "Too many email requests. Please wait before requesting another email.";
+    }
+    
+    // Show the actual error message if available
+    if (error.message) {
+      return error.message;
+    }
+    
+    return "An unexpected error occurred. Please try again or contact support if the problem persists.";
   };
 
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const { error } = await signIn(values.email, values.password);
+      const { error, data } = await signIn(values.email, values.password);
+      
+      // Log for debugging
       if (error) {
+        console.error("Sign in error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        });
+      }
+      
+      if (error) {
+        const errorMessage = getErrorMessage(error);
         toast({
           title: "Sign in failed",
-          description: getErrorMessage(error),
+          description: errorMessage,
           variant: "destructive",
         });
+        
+        // If email not verified, show resend option
+        if (error.message?.toLowerCase().includes("email not confirmed") || 
+            error.message?.toLowerCase().includes("email not verified")) {
+          setResendEmailAddress(values.email);
+          setShowResendEmail(true);
+        }
       } else {
         // Track login
         const { trackLogin } = await import("@/lib/analytics");
@@ -189,6 +223,7 @@ const AuthDialog = ({ open, onOpenChange, preSelectedRole }: AuthDialogProps) =>
         navigate("/redirect");
       }
     } catch (error: any) {
+      console.error("Unexpected sign in error:", error);
       toast({
         title: "Error",
         description: getErrorMessage(error),
