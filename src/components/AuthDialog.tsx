@@ -140,12 +140,18 @@ const AuthDialog = ({ open, onOpenChange, preSelectedRole }: AuthDialogProps) =>
     
     // Log the full error for debugging
     console.error("Sign in error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      status: error.status,
+      name: error.name,
+      fullError: error,
+    });
     
     const message = error.message?.toLowerCase() || "";
     const status = error.status;
     
     // Handle specific error codes and messages
-    if (message.includes("email not confirmed") || message.includes("email not verified") || status === 400) {
+    if (message.includes("email not confirmed") || message.includes("email not verified")) {
       // Check if it's specifically an email verification issue
       const email = loginForm.getValues("email");
       if (email) {
@@ -155,7 +161,7 @@ const AuthDialog = ({ open, onOpenChange, preSelectedRole }: AuthDialogProps) =>
       return "Please verify your email address before signing in. Check your inbox for the verification link, or click 'Resend Confirmation Email' below.";
     }
     
-    if (message.includes("invalid login credentials") || message.includes("invalid credentials") || message.includes("invalid password")) {
+    if (message.includes("invalid login credentials") || message.includes("invalid credentials") || message.includes("invalid password") || status === 400) {
       return "Invalid email or password. Please check your credentials and try again. If you forgot your password, use 'Forgot password?' to reset it.";
     }
     
@@ -167,16 +173,20 @@ const AuthDialog = ({ open, onOpenChange, preSelectedRole }: AuthDialogProps) =>
       return "No account found with this email address. Please check your email or sign up for a new account.";
     }
     
+    if (message.includes("user is disabled") || message.includes("user disabled")) {
+      return "This account has been disabled. Please contact support.";
+    }
+    
     if (message.includes("email rate limit")) {
       return "Too many email requests. Please wait before requesting another email.";
     }
     
-    // Show the actual error message if available
+    // Show the actual error message if available (helpful for debugging)
     if (error.message) {
-      return error.message;
+      return `${error.message} (Check browser console for details)`;
     }
     
-    return "An unexpected error occurred. Please try again or contact support if the problem persists.";
+    return "An unexpected error occurred. Please check the browser console (F12) for details or try 'Forgot password?' to reset your password.";
   };
 
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
