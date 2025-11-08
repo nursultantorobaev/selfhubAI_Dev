@@ -186,6 +186,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_verified: boolean | null
+          latitude: number | null
+          longitude: number | null
           logo_url: string | null
           owner_id: string
           phone: string
@@ -209,6 +211,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           logo_url?: string | null
           owner_id: string
           phone: string
@@ -232,6 +236,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           logo_url?: string | null
           owner_id?: string
           phone?: string

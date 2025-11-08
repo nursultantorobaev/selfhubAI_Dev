@@ -3,15 +3,17 @@ import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import BusinessCard from "@/components/BusinessCard";
+import { BusinessMapView } from "@/components/BusinessMapView";
 import HowItWorks from "@/components/HowItWorks";
 import Footer from "@/components/Footer";
 import { AdvancedFilters, type AdvancedFilters as AdvancedFiltersType } from "@/components/AdvancedFilters";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, X, Map, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,6 +22,9 @@ const Index = () => {
     searchParams.get("type") || null
   );
   const [city, setCity] = useState(searchParams.get("city") || "");
+  const [viewMode, setViewMode] = useState<"list" | "map">(
+    (searchParams.get("view") as "list" | "map") || "list"
+  );
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersType>(() => {
     // Parse advanced filters from URL
     const filters: AdvancedFiltersType = {};
@@ -44,13 +49,14 @@ const Index = () => {
     if (searchQuery) params.set("search", searchQuery);
     if (selectedCategory) params.set("type", selectedCategory);
     if (city) params.set("city", city);
+    if (viewMode !== "list") params.set("view", viewMode);
     if (advancedFilters.minPrice !== undefined) params.set("minPrice", advancedFilters.minPrice.toString());
     if (advancedFilters.maxPrice !== undefined && advancedFilters.maxPrice !== 500) params.set("maxPrice", advancedFilters.maxPrice.toString());
     if (advancedFilters.minRating !== undefined && advancedFilters.minRating > 0) params.set("minRating", advancedFilters.minRating.toString());
     if (advancedFilters.hasAvailability) params.set("hasAvailability", "true");
     if (advancedFilters.sortBy) params.set("sortBy", advancedFilters.sortBy);
     setSearchParams(params, { replace: true });
-  }, [searchQuery, selectedCategory, city, advancedFilters, setSearchParams]);
+  }, [searchQuery, selectedCategory, city, viewMode, advancedFilters, setSearchParams]);
 
   const { data: businesses, isLoading, error } = useBusinesses({
     limit: 12,
@@ -90,7 +96,7 @@ const Index = () => {
       <section className="py-8 sm:py-16">
         <div className="container mx-auto px-3 sm:px-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 gap-4">
-            <div>
+            <div className="flex-1">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-2">
                 <h2 className="text-2xl sm:text-3xl font-bold">
                   {hasActiveFilters ? "Search Results" : "Recommended"}
@@ -116,12 +122,27 @@ const Index = () => {
                 }
               </p>
             </div>
-            {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters}>
-                <X className="h-4 w-4 mr-2" />
-                Clear All
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              {/* View Toggle */}
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "map")}>
+                <TabsList>
+                  <TabsTrigger value="list">
+                    <List className="h-4 w-4 mr-2" />
+                    List
+                  </TabsTrigger>
+                  <TabsTrigger value="map">
+                    <Map className="h-4 w-4 mr-2" />
+                    Map
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              {hasActiveFilters && (
+                <Button variant="outline" size="sm" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-2" />
+                  Clear All
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Active Filters */}
@@ -239,7 +260,12 @@ const Index = () => {
             </div>
           )}
           
-          {isLoading ? (
+          {viewMode === "map" ? (
+            <BusinessMapView
+              businesses={businesses || []}
+              isLoading={isLoading}
+            />
+          ) : isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="space-y-4">
