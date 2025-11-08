@@ -51,6 +51,13 @@ export const loadGoogleMaps = (): Promise<void> => {
       reject(new Error('Failed to load Google Maps API'));
     };
 
+    // Listen for API errors
+    window.gm_authFailure = () => {
+      isLoading = false;
+      console.error('Google Maps API authentication failed. Check your API key.');
+      reject(new Error('Google Maps API authentication failed'));
+    };
+
     document.head.appendChild(script);
   });
 

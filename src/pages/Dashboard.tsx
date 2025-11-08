@@ -132,7 +132,11 @@ const Dashboard = () => {
       })
       .catch((error) => {
         console.error("Failed to load Google Maps:", error);
-        setGoogleMapsError("Failed to load Google Maps API. Please check your API key.");
+        setGoogleMapsError(
+          "Failed to load Google Maps API. " +
+          "Please enable 'Places API (New)' and 'Geocoding API' in Google Cloud Console. " +
+          "See FIX_GOOGLE_MAPS_API_ERROR.md for details."
+        );
         setGoogleMapsLoaded(false);
       })
       .finally(() => {
