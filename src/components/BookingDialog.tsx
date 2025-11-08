@@ -183,7 +183,7 @@ export const BookingDialog = ({ open, onOpenChange, business }: BookingDialogPro
 
   // Reset form when dialog opens/closes
   useEffect(() => {
-    if (open && user) {
+    if (open) {
       form.reset({
         serviceId: "",
         appointmentDate: undefined,
@@ -327,15 +327,7 @@ export const BookingDialog = ({ open, onOpenChange, business }: BookingDialogPro
   };
 
   const onSubmit = async (values: z.infer<typeof bookingSchema>) => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to book an appointment.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Guest booking is now allowed - no need to check for user
     try {
       const dateString = format(values.appointmentDate, "yyyy-MM-dd");
 
@@ -413,10 +405,12 @@ export const BookingDialog = ({ open, onOpenChange, business }: BookingDialogPro
         }
       }
 
+      // For guest bookings, customer_id is null
+      // For logged-in users, use their user ID
       const appointment = await createAppointment.mutateAsync({
         business_id: business.id,
         service_id: values.serviceId,
-        customer_id: user.id,
+        customer_id: user?.id || null, // null for guest bookings
         appointment_date: dateString,
         appointment_time: values.appointmentTime,
         customer_name: values.customerName,
@@ -455,7 +449,9 @@ export const BookingDialog = ({ open, onOpenChange, business }: BookingDialogPro
 
       toast({
         title: "Appointment Booked!",
-        description: "Your appointment has been booked successfully. You'll receive a confirmation email shortly.",
+        description: user 
+          ? "Your appointment has been booked successfully. You'll receive a confirmation email shortly."
+          : "Your appointment has been booked successfully! You'll receive a confirmation email shortly. Create an account to manage your bookings easily.",
       });
 
       onOpenChange(false);
@@ -512,18 +508,15 @@ export const BookingDialog = ({ open, onOpenChange, business }: BookingDialogPro
           <DialogTitle>Book an Appointment</DialogTitle>
           <DialogDescription>
             Book an appointment with {business.business_name}
+            {!user && (
+              <span className="block mt-2 text-xs text-muted-foreground">
+                No account required! You can book as a guest or create an account to manage your bookings.
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
-        {!user ? (
-          <div className="py-8 text-center">
-            <p className="text-muted-foreground mb-4">
-              Please sign in to book an appointment.
-            </p>
-            <Button onClick={() => onOpenChange(false)}>Close</Button>
-          </div>
-        ) : (
-          <Form {...form}>
+        <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Service Selection */}
               <FormField
@@ -775,7 +768,6 @@ export const BookingDialog = ({ open, onOpenChange, business }: BookingDialogPro
               </div>
             </form>
           </Form>
-        )}
       </DialogContent>
     </Dialog>
   );

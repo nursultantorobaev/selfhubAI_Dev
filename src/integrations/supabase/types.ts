@@ -14,7 +14,7 @@ export type Database = {
           id: string
           business_id: string
           service_id: string
-          customer_id: string
+          customer_id: string | null // Nullable for guest bookings
           appointment_date: string
           appointment_time: string
           status: "pending" | "confirmed" | "completed" | "cancelled"
@@ -29,7 +29,7 @@ export type Database = {
           id?: string
           business_id: string
           service_id: string
-          customer_id: string
+          customer_id?: string | null // Nullable for guest bookings
           appointment_date: string
           appointment_time: string
           status?: "pending" | "confirmed" | "completed" | "cancelled"
@@ -44,7 +44,7 @@ export type Database = {
           id?: string
           business_id?: string
           service_id?: string
-          customer_id?: string
+          customer_id?: string | null // Nullable for guest bookings
           appointment_date?: string
           appointment_time?: string
           status?: "pending" | "confirmed" | "completed" | "cancelled"
