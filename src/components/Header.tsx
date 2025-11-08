@@ -65,13 +65,23 @@ const Header = () => {
             ) : user ? (
               <>
                 {isBusinessOwner ? (
-                  <Button 
-                    size="sm" 
-                    className="hidden sm:flex text-xs sm:text-sm"
-                    onClick={() => navigate("/business/dashboard")}
-                  >
-                    Dashboard
-                  </Button>
+                  <>
+                    <Button 
+                      size="sm" 
+                      className="hidden sm:flex text-xs sm:text-sm"
+                      onClick={() => navigate("/business/dashboard")}
+                    >
+                      Dashboard
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="hidden sm:flex text-xs sm:text-sm"
+                      onClick={() => navigate("/customer/home")}
+                    >
+                      Browse
+                    </Button>
+                  </>
                 ) : (
                   <Button 
                     size="sm" 
@@ -115,12 +125,16 @@ const Header = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate("/business/calendar")}>
                           <Calendar className="mr-2 h-4 w-4" />
-                          Calendar
+                          Business Calendar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate("/customer/home")}>
                           <User className="mr-2 h-4 w-4" />
                           Browse Services
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate("/customer/bookings")}>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          My Bookings
                         </DropdownMenuItem>
                       </>
                     ) : (
