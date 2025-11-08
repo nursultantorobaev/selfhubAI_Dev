@@ -191,7 +191,7 @@ export default function Calendar() {
           <p className="text-muted-foreground mb-6">
             You need to create a business profile first to view your calendar.
           </p>
-          <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
+          <Button onClick={() => navigate("/business/dashboard")}>Go to Dashboard</Button>
         </div>
         <Footer />
       </div>
@@ -240,7 +240,7 @@ export default function Calendar() {
                   <Plus className="mr-2 h-4 w-4" />
                   Create Appointment
                 </Button>
-                <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                <Button variant="outline" onClick={() => navigate("/business/dashboard")}>
                   Back to Dashboard
                 </Button>
               </div>
