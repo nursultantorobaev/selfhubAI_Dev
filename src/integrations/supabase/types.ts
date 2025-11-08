@@ -266,6 +266,8 @@ export type Database = {
           full_name: string | null
           id: string
           is_business_owner: boolean | null
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
           phone: string | null
           updated_at: string
         }
@@ -276,6 +278,8 @@ export type Database = {
           full_name?: string | null
           id: string
           is_business_owner?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -286,6 +290,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_business_owner?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
           phone?: string | null
           updated_at?: string
         }

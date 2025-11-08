@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { OnboardingCheck } from "@/components/OnboardingCheck";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import BusinessCard from "@/components/BusinessCard";
@@ -77,8 +78,9 @@ export default function CustomerHome() {
     !!advancedFilters.sortBy;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <OnboardingCheck>
+      <div className="min-h-screen bg-background">
+        <Header />
       <Hero 
         searchQuery={searchQuery}
         selectedCategory={selectedCategory}
@@ -151,9 +153,10 @@ export default function CustomerHome() {
         </div>
       </section>
       
-      <HowItWorks />
-      <Footer />
-    </div>
+        <HowItWorks />
+        <Footer />
+      </div>
+    </OnboardingCheck>
   );
 }
 

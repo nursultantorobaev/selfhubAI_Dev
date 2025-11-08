@@ -45,10 +45,14 @@ export const useBusinessProfile = () => {
 
       if (error) throw error;
       
-      // Update user profile to mark as business owner
+      // Update user profile to mark as business owner and complete onboarding
       await supabase
         .from("profiles")
-        .update({ is_business_owner: true })
+        .update({ 
+          is_business_owner: true,
+          onboarding_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
+        })
         .eq("id", user.id);
 
       return data as BusinessProfile;
