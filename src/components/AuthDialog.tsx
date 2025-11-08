@@ -55,9 +55,10 @@ const forgotPasswordSchema = z.object({
 interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preSelectedRole?: "customer" | "business";
 }
 
-const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
+const AuthDialog = ({ open, onOpenChange, preSelectedRole }: AuthDialogProps) => {
   const { signIn, signUp, resetPassword, resendConfirmationEmail, user, profile } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +68,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showResendEmail, setShowResendEmail] = useState(false);
   const [resendEmailAddress, setResendEmailAddress] = useState("");
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(preSelectedRole || null);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
 
   // Close dialog if user is already logged in
@@ -78,16 +79,36 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   }, [user, open, onOpenChange]);
 
   // Reset role selection when switching tabs or closing
+  // But preserve pre-selected role if provided
   useEffect(() => {
+    if (preSelectedRole) {
+      // If a role is pre-selected, set it and skip role selection UI
+      setSelectedRole(preSelectedRole);
+      setShowRoleSelection(false);
+    }
+    
     if (!open) {
-      setSelectedRole(null);
+      if (!preSelectedRole) {
+        setSelectedRole(null);
+      } else {
+        setSelectedRole(preSelectedRole);
+      }
       setShowRoleSelection(false);
     }
     if (activeTab === "login") {
       setShowRoleSelection(false);
-      setSelectedRole(null);
+      if (!preSelectedRole) {
+        setSelectedRole(null);
+      } else {
+        setSelectedRole(preSelectedRole);
+      }
     }
-  }, [open, activeTab]);
+    // If preSelectedRole changes, update selectedRole
+    if (preSelectedRole && preSelectedRole !== selectedRole) {
+      setSelectedRole(preSelectedRole);
+      setShowRoleSelection(false);
+    }
+  }, [open, activeTab, preSelectedRole, selectedRole]);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),

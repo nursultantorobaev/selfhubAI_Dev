@@ -153,7 +153,7 @@ const Header = () => {
                 <Button 
                   size="sm" 
                   className="hidden sm:flex text-xs sm:text-sm"
-                  onClick={() => setAuthDialogOpen(true)}
+                  onClick={() => navigate("/for-businesses")}
                 >
                   List your business
                 </Button>

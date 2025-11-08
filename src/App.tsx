@@ -12,6 +12,7 @@ import BusinessDetail from "./pages/BusinessDetail";
 import Dashboard from "./pages/Dashboard";
 import CustomerHome from "./pages/CustomerHome";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import ForBusinesses from "./pages/ForBusinesses";
 import Calendar from "./pages/Calendar";
 import ResetPassword from "./pages/ResetPassword";
 import Privacy from "./pages/Privacy";
@@ -32,6 +33,7 @@ const App = () => (
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
+              <Route path="/for-businesses" element={<ForBusinesses />} />
               <Route path="/business/:id" element={<BusinessDetail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/privacy" element={<Privacy />} />
