@@ -39,16 +39,29 @@ export const CustomerOnboarding = ({ onComplete }: CustomerOnboardingProps) => {
 
     setIsLoading(true);
     try {
-      // Mark onboarding as completed
-      const { error } = await supabase
+      // First, try to update onboarding status
+      // Handle case where columns might not exist yet (graceful degradation)
+      const { error, data } = await supabase
         .from("profiles")
         .update({
           onboarding_completed: true,
           onboarding_completed_at: new Date().toISOString(),
         })
-        .eq("id", user.id);
+        .eq("id", user.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        // Check if error is due to missing columns
+        const errorMsg = error.message?.toLowerCase() || "";
+        if (errorMsg.includes("column") && (errorMsg.includes("onboarding_completed") || errorMsg.includes("does not exist"))) {
+          // Columns don't exist - this is okay, just continue without tracking
+          console.warn("Onboarding tracking columns not found. Please run ADD_ONBOARDING_TRACKING.sql migration.");
+          // Continue without throwing - onboarding will work, just won't be tracked
+        } else {
+          // Other error - throw it
+          throw error;
+        }
+      }
 
       await refreshProfile();
       
@@ -60,9 +73,20 @@ export const CustomerOnboarding = ({ onComplete }: CustomerOnboardingProps) => {
       onComplete();
     } catch (error: any) {
       console.error("Error completing onboarding:", error);
+      
+      // Provide more specific error message
+      let errorMessage = "Failed to complete onboarding. Please try again.";
+      if (error.message?.includes("permission") || error.message?.includes("policy")) {
+        errorMessage = "Permission denied. Please check your database permissions or run the onboarding migration.";
+      } else if (error.message?.includes("column")) {
+        errorMessage = "Database migration needed. Please run ADD_ONBOARDING_TRACKING.sql in Supabase.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to complete onboarding. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

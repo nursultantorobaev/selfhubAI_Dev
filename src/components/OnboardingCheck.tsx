@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessProfile } from "@/hooks/useBusinessProfile";
 import { CustomerOnboarding } from "./CustomerOnboarding";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -14,14 +15,24 @@ interface OnboardingCheckProps {
  */
 export const OnboardingCheck = ({ children, onOnboardingComplete }: OnboardingCheckProps) => {
   const { user, profile, loading, refreshProfile } = useAuth();
+  const { hasBusiness, isLoading: businessLoading } = useBusinessProfile();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || businessLoading) return;
 
     if (!user) {
       // Not logged in, show children
+      setCheckingOnboarding(false);
+      return;
+    }
+
+    // Check if user is a business owner (by flag or by having a business profile)
+    const isBusinessOwner = profile?.is_business_owner || hasBusiness;
+
+    // If business owner, never show customer onboarding
+    if (isBusinessOwner) {
       setCheckingOnboarding(false);
       return;
     }
@@ -32,14 +43,11 @@ export const OnboardingCheck = ({ children, onOnboardingComplete }: OnboardingCh
 
     if (!onboardingCompleted) {
       // Only show customer onboarding for non-business owners
-      // Business owners will complete onboarding through business setup
-      if (!profile?.is_business_owner) {
-        setShowOnboarding(true);
-      }
+      setShowOnboarding(true);
     }
 
     setCheckingOnboarding(false);
-  }, [user, profile, loading]);
+  }, [user, profile, loading, hasBusiness, businessLoading]);
 
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);

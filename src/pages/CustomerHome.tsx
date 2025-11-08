@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessProfile } from "@/hooks/useBusinessProfile";
 import { OnboardingCheck } from "@/components/OnboardingCheck";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -17,6 +18,7 @@ import { useSearchParams } from "react-router-dom";
 
 export default function CustomerHome() {
   const { user, profile } = useAuth();
+  const { hasBusiness, isLoading: businessLoading } = useBusinessProfile();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
@@ -43,10 +45,11 @@ export default function CustomerHome() {
 
   // Redirect business owners to their dashboard
   useEffect(() => {
-    if (profile?.is_business_owner) {
+    // Check both the flag and if they have a business profile
+    if (profile?.is_business_owner || hasBusiness) {
       navigate("/business/dashboard");
     }
-  }, [profile, navigate]);
+  }, [profile, hasBusiness, navigate]);
 
   // Update URL params when filters change
   useEffect(() => {
