@@ -52,13 +52,23 @@ const Header = () => {
               <div className="h-8 w-8 animate-pulse bg-muted rounded" />
             ) : user ? (
               <>
-                <Button 
-                  size="sm" 
-                  className="hidden sm:flex text-xs sm:text-sm"
-                  onClick={() => navigate("/dashboard")}
-                >
-                  List your business
-                </Button>
+                {profile?.is_business_owner ? (
+                  <Button 
+                    size="sm" 
+                    className="hidden sm:flex text-xs sm:text-sm"
+                    onClick={() => navigate("/business/dashboard")}
+                  >
+                    Dashboard
+                  </Button>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    className="hidden sm:flex text-xs sm:text-sm"
+                    onClick={() => navigate("/customer/bookings")}
+                  >
+                    My Bookings
+                  </Button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 min-w-[40px] sm:min-w-auto">
@@ -85,23 +95,34 @@ const Header = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {profile?.is_business_owner && (
+                    {profile?.is_business_owner ? (
                       <>
-                        <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                        <DropdownMenuItem onClick={() => navigate("/business/dashboard")}>
                           <Settings className="mr-2 h-4 w-4" />
                           Business Dashboard
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate("/calendar")}>
+                        <DropdownMenuItem onClick={() => navigate("/business/calendar")}>
                           <Calendar className="mr-2 h-4 w-4" />
                           Calendar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate("/customer/home")}>
+                          <User className="mr-2 h-4 w-4" />
+                          Browse Services
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate("/customer/home")}>
+                          <User className="mr-2 h-4 w-4" />
+                          Browse Services
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate("/customer/bookings")}>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          My Bookings
+                        </DropdownMenuItem>
                       </>
                     )}
-                    <DropdownMenuItem onClick={() => navigate("/my-bookings")}>
-                      <Calendar className="mr-2 h-4 w-4" />
-                      My Bookings
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />

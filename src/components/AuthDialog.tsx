@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { RoleSelection, type UserRole } from "@/components/RoleSelection";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -56,7 +58,8 @@ interface AuthDialogProps {
 }
 
 const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
-  const { signIn, signUp, resetPassword, resendConfirmationEmail, user } = useAuth();
+  const { signIn, signUp, resetPassword, resendConfirmationEmail, user, profile } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -64,6 +67,8 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showResendEmail, setShowResendEmail] = useState(false);
   const [resendEmailAddress, setResendEmailAddress] = useState("");
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
 
   // Close dialog if user is already logged in
   useEffect(() => {
@@ -71,6 +76,18 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       onOpenChange(false);
     }
   }, [user, open, onOpenChange]);
+
+  // Reset role selection when switching tabs or closing
+  useEffect(() => {
+    if (!open) {
+      setSelectedRole(null);
+      setShowRoleSelection(false);
+    }
+    if (activeTab === "login") {
+      setShowRoleSelection(false);
+      setSelectedRole(null);
+    }
+  }, [open, activeTab]);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -146,8 +163,9 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
         });
         onOpenChange(false);
         loginForm.reset();
-        // Check if user has business profile and redirect accordingly
-        // This will be handled in the Header component
+        
+        // Redirect to role-based redirect handler
+        navigate("/redirect");
       }
     } catch (error: any) {
       toast({
@@ -160,10 +178,25 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     }
   };
 
+  const handleRoleSelect = (role: UserRole) => {
+    setSelectedRole(role);
+    setShowRoleSelection(false);
+  };
+
   const onSignupSubmit = async (values: z.infer<typeof signupSchema>) => {
+    if (!selectedRole) {
+      toast({
+        title: "Please select a role",
+        description: "Choose whether you're a customer or business owner.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const { error } = await signUp(values.email, values.password, values.fullName);
+      // Pass role to signUp function (will be stored in user metadata)
+      const { error } = await signUp(values.email, values.password, values.fullName, selectedRole);
       if (error) {
         const errorMsg = error.message?.toLowerCase() || "";
         let description = error.message;
@@ -452,12 +485,43 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           </TabsContent>
 
           <TabsContent value="signup" className="space-y-4 mt-4">
-            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
-              <p className="text-sm text-blue-900 dark:text-blue-100">
-                <strong>Why email confirmation?</strong> We send a verification email to ensure your email address is valid and to protect your account security. You'll need to click the link in the email before you can sign in.
-              </p>
-            </div>
-            <Form {...signupForm}>
+            {!selectedRole ? (
+              <>
+                <RoleSelection
+                  onRoleSelect={handleRoleSelect}
+                  selectedRole={selectedRole}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveTab("login")}
+                  className="w-full"
+                >
+                  Already have an account? Sign In
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4 p-3 bg-muted rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Role:</span>
+                    <span className="text-sm capitalize">{selectedRole}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRole(null);
+                    }}
+                  >
+                    Change
+                  </Button>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    <strong>Why email confirmation?</strong> We send a verification email to ensure your email address is valid and to protect your account security. You'll need to click the link in the email before you can sign in.
+                  </p>
+                </div>
+                <Form {...signupForm}>
               <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
                 <FormField
                   control={signupForm.control}
@@ -571,6 +635,8 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                 </Button>
               </form>
             </Form>
+            </>
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
