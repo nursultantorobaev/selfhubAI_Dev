@@ -25,6 +25,7 @@ export const OnboardingCheck = ({ children, onOnboardingComplete }: OnboardingCh
     if (!user) {
       // Not logged in, show children
       setCheckingOnboarding(false);
+      setShowOnboarding(false);
       return;
     }
 
@@ -36,24 +37,36 @@ export const OnboardingCheck = ({ children, onOnboardingComplete }: OnboardingCh
     // They can browse and book services without onboarding
     if (isBusinessOwner) {
       setCheckingOnboarding(false);
+      setShowOnboarding(false);
       return;
     }
 
     // Check if onboarding is completed
-    // If profile doesn't have onboarding_completed field, assume not completed (for backward compatibility)
-    const onboardingCompleted = profile?.onboarding_completed ?? false;
+    // Check both profile table (if columns exist) and user metadata (fallback)
+    const profileOnboardingCompleted = profile?.onboarding_completed ?? false;
+    const metadataOnboardingCompleted = user.user_metadata?.customer_onboarding_completed === true;
+    const onboardingCompleted = profileOnboardingCompleted || metadataOnboardingCompleted;
 
     if (!onboardingCompleted) {
       // Only show customer onboarding for non-business owners
       setShowOnboarding(true);
+    } else {
+      // Onboarding is completed, make sure we don't show it
+      setShowOnboarding(false);
     }
 
     setCheckingOnboarding(false);
-  }, [user, profile, loading, hasBusiness, businessLoading]);
+  }, [user, user?.user_metadata, profile, loading, hasBusiness, businessLoading]);
 
   const handleOnboardingComplete = async () => {
+    // Immediately hide onboarding UI
     setShowOnboarding(false);
+    setCheckingOnboarding(false);
+    
+    // Refresh profile to get latest data
     await refreshProfile();
+    
+    // Call optional callback
     onOnboardingComplete?.();
   };
 

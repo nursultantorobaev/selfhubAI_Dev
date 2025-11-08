@@ -48,18 +48,24 @@ export const CustomerOnboarding = ({ onComplete }: CustomerOnboardingProps) => {
         preferencesData.preferred_service_types = preferences;
       }
 
-      // Update user metadata with preferences
-      if (Object.keys(preferencesData).length > 0) {
-        const { error: metadataError } = await supabase.auth.updateUser({
-          data: {
-            ...user.user_metadata,
-            ...preferencesData,
-          },
-        });
-        if (metadataError) {
-          console.warn("Failed to save preferences to metadata:", metadataError);
-          // Continue anyway - preferences are optional
-        }
+      // Always mark onboarding as completed in user metadata (as fallback if DB columns don't exist)
+      const metadataUpdate = {
+        ...user.user_metadata,
+        customer_onboarding_completed: true,
+        customer_onboarding_completed_at: new Date().toISOString(),
+        ...preferencesData,
+      };
+
+      // Update user metadata with onboarding status and preferences
+      const { data: updatedUser, error: metadataError } = await supabase.auth.updateUser({
+        data: metadataUpdate,
+      });
+      if (metadataError) {
+        console.warn("Failed to save onboarding status to metadata:", metadataError);
+        // Continue anyway - we'll try DB update
+      } else if (updatedUser?.user) {
+        // Force refresh of auth state to get updated user metadata
+        await supabase.auth.getSession();
       }
 
       // Try to update onboarding status in profiles table
@@ -96,6 +102,10 @@ export const CustomerOnboarding = ({ onComplete }: CustomerOnboardingProps) => {
         console.warn("Database update failed, but preferences saved to metadata:", dbError);
       }
 
+      // Wait a moment for auth state to update with new metadata
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Refresh profile to get latest data
       await refreshProfile();
       
       toast({
@@ -103,6 +113,7 @@ export const CustomerOnboarding = ({ onComplete }: CustomerOnboardingProps) => {
         description: "You're all set. Let's find you the perfect service.",
       });
 
+      // Call onComplete which will trigger OnboardingCheck to re-evaluate
       onComplete();
     } catch (error: any) {
       console.error("Error completing onboarding:", error);
