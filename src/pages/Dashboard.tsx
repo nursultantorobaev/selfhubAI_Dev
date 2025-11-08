@@ -105,15 +105,38 @@ const Dashboard = () => {
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+  const [googleMapsError, setGoogleMapsError] = useState<string | null>(null);
+  const [isLoadingMaps, setIsLoadingMaps] = useState(true);
 
   // Load Google Maps API on mount
   useEffect(() => {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    
+    if (!apiKey) {
+      setGoogleMapsError("Google Maps API key not configured. Address autocomplete will not work.");
+      setIsLoadingMaps(false);
+      return;
+    }
+
+    setIsLoadingMaps(true);
     loadGoogleMaps()
       .then(() => {
-        setGoogleMapsLoaded(true);
+        // Double check that Google Maps is actually loaded
+        if (window.google && window.google.maps && window.google.maps.places) {
+          setGoogleMapsLoaded(true);
+          setGoogleMapsError(null);
+          console.log("Google Maps API loaded successfully");
+        } else {
+          throw new Error("Google Maps API loaded but places library not available");
+        }
       })
       .catch((error) => {
         console.error("Failed to load Google Maps:", error);
+        setGoogleMapsError("Failed to load Google Maps API. Please check your API key.");
+        setGoogleMapsLoaded(false);
+      })
+      .finally(() => {
+        setIsLoadingMaps(false);
       });
   }, []);
   
@@ -651,7 +674,15 @@ const Dashboard = () => {
                         <FormItem>
                           <FormLabel>Street Address *</FormLabel>
                           <FormControl>
-                            {googleMapsLoaded ? (
+                            {isLoadingMaps ? (
+                              <div className="relative">
+                                <Input
+                                  placeholder="Loading address autocomplete..."
+                                  disabled
+                                />
+                                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                              </div>
+                            ) : googleMapsLoaded ? (
                               <PlacesAutocomplete
                                 value={field.value}
                                 onChange={(value) => {
@@ -684,54 +715,86 @@ const Dashboard = () => {
                                     if (zipComponent) {
                                       form.setValue("zip_code", zipComponent.long_name);
                                     }
+                                    
+                                    toast({
+                                      title: "Address selected",
+                                      description: "City, state, and zip code have been auto-filled.",
+                                    });
                                   } catch (error) {
                                     console.error("Error geocoding address:", error);
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to get address details. Please fill city and state manually.",
+                                      variant: "destructive",
+                                    });
                                   }
                                 }}
+                                searchOptions={{
+                                  types: ['address'],
+                                  componentRestrictions: { country: 'us' },
+                                }}
                               >
-                              {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-                                <div className="relative">
-                                  <Input
-                                    {...getInputProps({
-                                      placeholder: "125 Madison Avenue",
-                                      className: "w-full",
-                                    })}
-                                  />
-                                  {suggestions.length > 0 && (
-                                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
-                                      {loading && (
-                                        <div className="p-2 text-sm text-muted-foreground">Loading...</div>
-                                      )}
-                                      {suggestions.map((suggestion) => {
-                                        const className = cn(
-                                          "p-2 cursor-pointer hover:bg-accent text-sm",
-                                          suggestion.active && "bg-accent"
-                                        );
-                                        return (
-                                          <div
-                                            {...getSuggestionItemProps(suggestion, { className })}
-                                            key={suggestion.placeId}
-                                          >
-                                            {suggestion.description}
-                                          </div>
-                                        );
+                                {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+                                  <div className="relative">
+                                    <Input
+                                      {...getInputProps({
+                                        placeholder: "Start typing address (e.g., 1909 W Belmont)",
+                                        className: "w-full",
                                       })}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                                    />
+                                    {loading && (
+                                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                                    )}
+                                    {suggestions.length > 0 && (
+                                      <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                                        {suggestions.map((suggestion) => {
+                                          const className = cn(
+                                            "p-2 cursor-pointer hover:bg-accent text-sm transition-colors",
+                                            suggestion.active && "bg-accent"
+                                          );
+                                          return (
+                                            <div
+                                              {...getSuggestionItemProps(suggestion, { 
+                                                className,
+                                                onMouseDown: (e: React.MouseEvent) => {
+                                                  // Prevent input blur before selection
+                                                  e.preventDefault();
+                                                }
+                                              })}
+                                              key={suggestion.placeId}
+                                            >
+                                              <div className="flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                                <span>{suggestion.description}</span>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </PlacesAutocomplete>
                             ) : (
-                              <Input
-                                placeholder="125 Madison Avenue"
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                disabled={!googleMapsLoaded}
-                              />
+                              <div className="space-y-2">
+                                <Input
+                                  placeholder="125 Madison Avenue"
+                                  value={field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                />
+                                {googleMapsError && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {googleMapsError} You can still type the address manually.
+                                  </p>
+                                )}
+                              </div>
                             )}
                           </FormControl>
                           <FormDescription>
-                            Start typing your address and select from suggestions
+                            {googleMapsLoaded 
+                              ? "Start typing your address and select from suggestions. City, state, and zip will auto-fill."
+                              : "Type your address manually. For autocomplete, add VITE_GOOGLE_MAPS_API_KEY to your environment variables."
+                            }
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
