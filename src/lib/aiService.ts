@@ -52,11 +52,11 @@ Extract and return a JSON object with this exact structure:
   "business_name": "suggested business name",
   "business_type": "salon|barbershop|spa|nails|massage|fitness|beauty|wellness|other",
   "description": "SEO-optimized business description (2-3 sentences)",
-  "address": "street address if mentioned",
-  "city": "city name if mentioned",
-  "state": "state if mentioned",
+  "address": "street address (REQUIRED - use a reasonable default if not mentioned)",
+  "city": "city name (REQUIRED - use a reasonable default if not mentioned)",
+  "state": "state abbreviation if mentioned",
   "zip_code": "zip code if mentioned",
-  "phone": "phone number if mentioned",
+  "phone": "phone number in format XXX-XXX-XXXX (REQUIRED - use a placeholder if not mentioned)",
   "email": "email if mentioned",
   "website": "website if mentioned",
   "services": [
@@ -77,11 +77,14 @@ Extract and return a JSON object with this exact structure:
   ]
 }
 
-Rules:
+IMPORTANT RULES:
+- business_name: REQUIRED - Generate a professional name if not provided
+- address: REQUIRED - Must be at least 5 characters. Use a reasonable default like "123 Main Street" if not mentioned
+- city: REQUIRED - Must be at least 2 characters. Use a reasonable default like "New York" if not mentioned  
+- phone: REQUIRED - Must be at least 10 characters. Use format "555-000-0000" if not mentioned
 - day_of_week: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
-- If hours not specified, use Monday-Friday 9am-5pm
+- If hours not specified, use Monday-Friday 9am-5pm, Saturday 10am-4pm, Sunday closed
 - Extract services with prices and durations from the description
-- If address is incomplete, leave fields empty
 - Generate a professional business name if not provided
 - Create an engaging description highlighting unique features
 

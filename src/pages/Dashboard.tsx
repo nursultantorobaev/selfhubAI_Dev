@@ -234,17 +234,28 @@ const Dashboard = () => {
 
   const handleAIGenerated = async (aiData: any) => {
     try {
+      // Ensure we have minimum required fields
+      if (!aiData.business_name) {
+        toast({
+          title: "Error",
+          description: "AI did not generate a business name. Please try again or use manual form.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Populate form with AI-generated data
+      // Make sure required fields have defaults if missing
       form.reset({
-        business_name: aiData.business_name || "",
+        business_name: aiData.business_name || "My Business",
         business_type: (aiData.business_type || "other") as any,
         description: aiData.description || "",
-        address: aiData.address || "",
-        city: aiData.city || "",
+        address: aiData.address || "123 Main Street", // Required field - provide default
+        city: aiData.city || "New York", // Required field - provide default
         state: aiData.state || "",
         zip_code: aiData.zip_code || "",
         country: "US",
-        phone: aiData.phone || "",
+        phone: aiData.phone || "555-0000", // Required field - provide default
         email: aiData.email || "",
         website: aiData.website || "",
         logo_url: "",
@@ -255,15 +266,19 @@ const Dashboard = () => {
       (window as any).__aiGeneratedServices = aiData.services || [];
       (window as any).__aiGeneratedHours = aiData.hours || [];
 
+      // Close AI setup and ensure form is visible
       setShowAISetup(false);
+      setIsEditing(true); // Ensure form is in edit mode
+      
       toast({
         title: "Business Setup Loaded!",
-        description: "Review the details and click 'Create Business' to save. Services and hours will be added automatically.",
+        description: "Review the details below and click 'Create Business' to save. Services and hours will be added automatically.",
       });
     } catch (error: any) {
+      console.error("Error loading AI-generated data:", error);
       toast({
         title: "Error",
-        description: "Failed to load AI-generated data. Please try again.",
+        description: error.message || "Failed to load AI-generated data. Please try again.",
         variant: "destructive",
       });
     }
