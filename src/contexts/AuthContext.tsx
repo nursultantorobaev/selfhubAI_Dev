@@ -97,8 +97,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    // Get the current origin (works for both dev and production)
-    const redirectUrl = `${window.location.origin}/`;
+    // Use production URL for email redirects (Supabase will handle the redirect)
+    // In production, always use the production URL to avoid localhost issues
+    const isProduction = import.meta.env.PROD;
+    const redirectUrl = isProduction 
+      ? 'https://selfhub-ai-dev.vercel.app/' 
+      : `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -119,8 +123,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const resetPassword = async (email: string) => {
+    // Use production URL for email redirects
+    const isProduction = import.meta.env.PROD;
+    const redirectUrl = isProduction 
+      ? 'https://selfhub-ai-dev.vercel.app/reset-password' 
+      : `${window.location.origin}/reset-password`;
+    
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectUrl,
     });
     return { data, error };
   };
@@ -133,8 +143,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const resendConfirmationEmail = async (email: string) => {
-    // Get the current origin (works for both dev and production)
-    const redirectUrl = `${window.location.origin}/`;
+    // Use production URL for email redirects (Supabase will handle the redirect)
+    // In production, always use the production URL to avoid localhost issues
+    const isProduction = import.meta.env.PROD;
+    const redirectUrl = isProduction 
+      ? 'https://selfhub-ai-dev.vercel.app/' 
+      : `${window.location.origin}/`;
     
     const { error } = await supabase.auth.resend({
       type: 'signup',
