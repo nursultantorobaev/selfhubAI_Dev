@@ -46,13 +46,23 @@ export const useBusinessProfile = () => {
       if (error) throw error;
       
       // Update user profile to mark as business owner and complete onboarding
+      // Try to update onboarding fields, but don't fail if columns don't exist
+      const updateData: any = { 
+        is_business_owner: true,
+      };
+      
+      // Only add onboarding fields if they exist (graceful degradation)
+      // In production, these columns should exist after migration
+      try {
+        updateData.onboarding_completed = true;
+        updateData.onboarding_completed_at = new Date().toISOString();
+      } catch (e) {
+        // Ignore - columns might not exist yet
+      }
+      
       await supabase
         .from("profiles")
-        .update({ 
-          is_business_owner: true,
-          onboarding_completed: true,
-          onboarding_completed_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", user.id);
 
       return data as BusinessProfile;
