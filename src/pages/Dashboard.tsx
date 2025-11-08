@@ -33,6 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { US_STATES } from "@/lib/usStates";
+import { filterCities } from "@/lib/usCities";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
@@ -88,6 +96,8 @@ const Dashboard = () => {
   const { businessProfile, isLoading, hasBusiness, createBusiness, updateBusiness, deleteBusiness, isCreating, isUpdating, isDeleting } = useBusinessProfile();
   const [isEditing, setIsEditing] = useState(!hasBusiness);
   const [showAISetup, setShowAISetup] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [citySearchQuery, setCitySearchQuery] = useState("");
   
 
   const form = useForm<BusinessFormData>({
@@ -623,8 +633,16 @@ const Dashboard = () => {
                         <FormItem>
                           <FormLabel>Street Address *</FormLabel>
                           <FormControl>
-                            <Input placeholder="125 Madison Avenue" {...field} />
+                            <Input 
+                              placeholder="125 Madison Avenue" 
+                              {...field}
+                              pattern="[0-9]+\s+[A-Za-z\s]+"
+                              title="Please enter a valid street address (e.g., 123 Main Street)"
+                            />
                           </FormControl>
+                          <FormDescription>
+                            Enter street number and name (e.g., 123 Main Street)
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -632,15 +650,72 @@ const Dashboard = () => {
                     <FormField
                       control={form.control}
                       name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="New York" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const cities = filterCities(citySearchQuery || field.value || "");
+                        
+                        return (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>City *</FormLabel>
+                            <Popover open={cityOpen} onOpenChange={(open) => {
+                              setCityOpen(open);
+                              if (open) {
+                                setCitySearchQuery(field.value || "");
+                              }
+                            }}>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    type="button"
+                                    className={cn(
+                                      "w-full justify-between",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value || "Select city"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[400px] p-0" align="start">
+                                <Command>
+                                  <CommandInput 
+                                    placeholder="Search city..." 
+                                    value={citySearchQuery}
+                                    onValueChange={setCitySearchQuery}
+                                  />
+                                  <CommandList>
+                                    <CommandEmpty>No city found. Try typing more letters.</CommandEmpty>
+                                    <CommandGroup>
+                                      {cities.map((city) => (
+                                        <CommandItem
+                                          key={city}
+                                          value={city}
+                                          onSelect={() => {
+                                            field.onChange(city);
+                                            setCitySearchQuery("");
+                                            setCityOpen(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              city === field.value ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                          {city}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
 
@@ -651,9 +726,20 @@ const Dashboard = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>State</FormLabel>
-                          <FormControl>
-                            <Input placeholder="NY" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select state" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {US_STATES.map((state) => (
+                                <SelectItem key={state.value} value={state.value}>
+                                  {state.label} ({state.value})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -681,7 +767,15 @@ const Dashboard = () => {
                         <FormItem>
                           <FormLabel>Phone Number *</FormLabel>
                           <FormControl>
-                            <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                            <div className="[&_.PhoneInputInput]:flex [&_.PhoneInputInput]:h-10 [&_.PhoneInputInput]:w-full [&_.PhoneInputInput]:rounded-md [&_.PhoneInputInput]:border [&_.PhoneInputInput]:border-input [&_.PhoneInputInput]:bg-background [&_.PhoneInputInput]:px-3 [&_.PhoneInputInput]:py-2 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:ring-offset-background [&_.PhoneInputInput]:focus-visible:outline-none [&_.PhoneInputInput]:focus-visible:ring-2 [&_.PhoneInputInput]:focus-visible:ring-ring [&_.PhoneInputInput]:focus-visible:ring-offset-2 [&_.PhoneInputInput]:disabled:cursor-not-allowed [&_.PhoneInputInput]:disabled:opacity-50 [&_.PhoneInputCountry]:mr-2">
+                              <PhoneInput
+                                international
+                                defaultCountry="US"
+                                value={field.value}
+                                onChange={(value) => field.onChange(value || "")}
+                                placeholder="(555) 123-4567"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
