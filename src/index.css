@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 163 100% 16%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 163 100% 16%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 163 100% 16%;
+
+    --primary: 163 100% 16%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 163 100% 16%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 163 40% 40%;
+
+    --accent: 46 65% 52%;
+    --accent-foreground: 163 100% 16%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 163 100% 16%;
+
+    --radius: 0.75rem;
+    
+    --gradient-hero: linear-gradient(135deg, hsl(163 100% 16% / 0.95), hsl(163 80% 12% / 0.95));
+    --shadow-soft: 0 2px 8px hsl(163 100% 16% / 0.08);
+    --shadow-medium: 0 4px 16px hsl(163 100% 16% / 0.12);
+    --shadow-large: 0 8px 32px hsl(163 100% 16% / 0.16);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 163 50% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 163 40% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 163 40% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 163 80% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 163 30% 18%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 163 30% 18%;
+    --muted-foreground: 163 20% 65%;
+
+    --accent: 46 70% 55%;
+    --accent-foreground: 163 100% 16%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 163 30% 25%;
+    --input: 163 30% 25%;
+    --ring: 163 80% 35%;
+    
+    --gradient-hero: linear-gradient(135deg, hsl(163 80% 25% / 0.95), hsl(163 60% 18% / 0.95));
+    --shadow-soft: 0 2px 8px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 16px hsl(0 0% 0% / 0.4);
+    --shadow-large: 0 8px 32px hsl(0 0% 0% / 0.5);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Improve touch scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent text size adjustment on iOS */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Improve touch targets for mobile */
+  button, a, input, select, textarea {
+    @apply touch-manipulation;
+  }
+
+  /* Ensure minimum touch target size (44x44px recommended by Apple/Google) */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Improve form inputs on mobile */
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  @media (min-width: 640px) {
+    button, a {
+      min-height: auto;
+      min-width: auto;
+    }
+    
+    input, select, textarea {
+      font-size: inherit;
+    }
+  }
+}
