@@ -41,7 +41,15 @@ const Header = () => {
           <div className="flex items-center gap-4 sm:gap-8">
             <h2 
               className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent cursor-pointer"
-              onClick={() => navigate("/")}
+              onClick={() => {
+                if (user && profile?.is_business_owner) {
+                  navigate("/business/dashboard");
+                } else if (user) {
+                  navigate("/customer/home");
+                } else {
+                  navigate("/");
+                }
+              }}
             >
               SelfHub AI
             </h2>
