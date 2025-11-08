@@ -14,6 +14,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName?: string, role?: "customer" | "business") => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ data: any; error: any }>;
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
@@ -46,6 +47,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
+    }
+  };
+
+  const refreshUser = async () => {
+    // Force refresh of user session to get latest metadata
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      setUser(session.user);
+      await fetchProfile(session.user.id);
     }
   };
 
@@ -172,6 +182,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signUp,
         signOut,
         refreshProfile,
+        refreshUser,
         resetPassword,
         updatePassword,
         resendConfirmationEmail,

@@ -16,7 +16,7 @@ interface CustomerOnboardingProps {
 }
 
 export const CustomerOnboarding = ({ onComplete }: CustomerOnboardingProps) => {
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,19 +102,17 @@ export const CustomerOnboarding = ({ onComplete }: CustomerOnboardingProps) => {
         console.warn("Database update failed, but preferences saved to metadata:", dbError);
       }
 
-      // Wait a moment for auth state to update with new metadata
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Immediately call onComplete to hide onboarding UI
+      // This happens FIRST to prevent stuck screen
+      onComplete();
       
-      // Refresh profile to get latest data
-      await refreshProfile();
+      // Force refresh of user to get updated metadata
+      await refreshUser();
       
       toast({
         title: "Welcome to SelfHub AI!",
         description: "You're all set. Let's find you the perfect service.",
       });
-
-      // Call onComplete which will trigger OnboardingCheck to re-evaluate
-      onComplete();
     } catch (error: any) {
       console.error("Error completing onboarding:", error);
       

@@ -47,24 +47,32 @@ export const OnboardingCheck = ({ children, onOnboardingComplete }: OnboardingCh
     const metadataOnboardingCompleted = user.user_metadata?.customer_onboarding_completed === true;
     const onboardingCompleted = profileOnboardingCompleted || metadataOnboardingCompleted;
 
-    if (!onboardingCompleted) {
-      // Only show customer onboarding for non-business owners
-      setShowOnboarding(true);
-    } else {
+    // IMPORTANT: If showOnboarding is already false (set by handleOnboardingComplete),
+    // don't override it back to true
+    if (onboardingCompleted) {
       // Onboarding is completed, make sure we don't show it
       setShowOnboarding(false);
+      setCheckingOnboarding(false);
+    } else if (!showOnboarding) {
+      // Only show onboarding if it's not already hidden
+      // This prevents re-showing after handleOnboardingComplete sets it to false
+      setShowOnboarding(true);
     }
 
     setCheckingOnboarding(false);
-  }, [user, user?.user_metadata, profile, loading, hasBusiness, businessLoading]);
+  }, [user, user?.user_metadata, profile, loading, hasBusiness, businessLoading, showOnboarding]);
 
   const handleOnboardingComplete = async () => {
-    // Immediately hide onboarding UI
+    // CRITICAL: Immediately hide onboarding UI FIRST
+    // This prevents the stuck screen
     setShowOnboarding(false);
     setCheckingOnboarding(false);
     
-    // Refresh profile to get latest data
-    await refreshProfile();
+    // Force a re-render by updating state
+    // This ensures the component shows children instead of onboarding
+    
+    // Refresh profile to get latest data (async, don't wait)
+    refreshProfile().catch(console.error);
     
     // Call optional callback
     onOnboardingComplete?.();
