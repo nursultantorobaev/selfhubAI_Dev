@@ -1,5 +1,9 @@
 # SelfHub AI - Beauty & Wellness Booking Platform
 
+> **📖 For detailed setup instructions, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)**
+
+# SelfHub AI - Beauty & Wellness Booking Platform
+
 A modern, full-featured booking platform for beauty and wellness businesses built with React, TypeScript, and Supabase.
 
 ## Features
